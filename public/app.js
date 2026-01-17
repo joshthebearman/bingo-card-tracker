@@ -5,7 +5,7 @@ let currentBingos = [];
 let selectedGoalId = null;
 let isViewingOtherCard = false;
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 
 // Themes
 const themes = [
@@ -266,6 +266,12 @@ function renderCard() {
       stamp.className = 'stamp-overlay';
       stamp.textContent = currentCard.stamp_icon || '⭐';
       stamp.style.color = currentCard.stamp_color || '#FFD700';
+
+      // Random rotation for ink stamp effect (between -15 and 15 degrees)
+      const rotation = (Math.random() * 30 - 15);
+      stamp.style.setProperty('--stamp-rotation', `${rotation}deg`);
+      stamp.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+
       square.appendChild(stamp);
     }
 
@@ -527,9 +533,11 @@ function drawBingoLines() {
 
   currentBingos.forEach(bingo => {
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('stroke', '#FFD700');
-    line.setAttribute('stroke-width', '8');
+    line.setAttribute('stroke', '#d63031');
+    line.setAttribute('stroke-width', '6');
     line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('stroke-dasharray', '2, 1');
+    line.setAttribute('opacity', '0.85');
 
     let x1, y1, x2, y2;
 
@@ -803,12 +811,22 @@ function showDeleteConfirmation() {
 
 function closeDeleteModal() {
   document.getElementById('delete-modal').classList.remove('active');
+  document.getElementById('delete-owner-name').value = '';
 }
 
 async function confirmDeleteCard() {
+  const ownerName = document.getElementById('delete-owner-name').value.trim();
+
+  if (!ownerName) {
+    alert('Please enter the owner name to confirm deletion');
+    return;
+  }
+
   try {
     const response = await fetch(`${API_URL}/cards/${currentCard.code}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerName })
     });
 
     if (response.ok) {
