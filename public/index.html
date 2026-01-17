@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bingo Card Goal Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Landing Page -->
+  <div id="landing-page" class="page active">
+    <div class="container">
+      <h1>🎯 Bingo Card Goal Tracker</h1>
+      <p>Track your yearly goals in a fun, interactive bingo card!</p>
+
+      <div class="landing-options">
+        <button class="btn btn-primary" onclick="showCreateCard()">Create New Card</button>
+        <button class="btn btn-secondary" onclick="showLoadCard()">Load Existing Card</button>
+      </div>
+
+      <div id="load-card-section" class="hidden">
+        <h2>Enter Your Card Code</h2>
+        <input type="text" id="card-code-input" placeholder="e.g., ALICE-2026-X7Y9">
+        <button class="btn btn-primary" onclick="loadCard()">Load Card</button>
+        <p class="error-message" id="load-error"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Creation Page -->
+  <div id="create-page" class="page">
+    <div class="container">
+      <h1>Create Your Bingo Card</h1>
+
+      <div class="form-section">
+        <label for="owner-name">Your Name:</label>
+        <input type="text" id="owner-name" placeholder="Enter your name" required>
+      </div>
+
+      <div class="form-section">
+        <h2>Enter Your 25 Goals</h2>
+        <p class="info-box">Select one goal as your "free space" - it will be placed in the center square.</p>
+
+        <div id="goals-container"></div>
+      </div>
+
+      <button class="btn btn-primary btn-large" onclick="createCard()">Create My Bingo Card</button>
+      <button class="btn btn-secondary" onclick="showLanding()">Cancel</button>
+      <p class="error-message" id="create-error"></p>
+    </div>
+  </div>
+
+  <!-- Main Bingo Card View -->
+  <div id="card-page" class="page">
+    <div class="hamburger-menu" onclick="toggleDrawer()">
+      <div class="hamburger-line"></div>
+      <div class="hamburger-line"></div>
+      <div class="hamburger-line"></div>
+    </div>
+
+    <div class="side-drawer" id="side-drawer">
+      <div class="drawer-content">
+        <h2>Menu</h2>
+        <button class="drawer-item" onclick="showSettings()">Settings & Personalization</button>
+        <button class="drawer-item" onclick="showViewOtherCard()">View Other Card</button>
+        <button class="drawer-item" onclick="showLanding(); closeDrawer()">Home</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <h1 id="card-title">My Bingo Card</h1>
+
+      <div class="progress-stats">
+        <div class="stat">
+          <span class="stat-value" id="goals-complete">0</span>
+          <span class="stat-label">/ 25 Goals</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="bingos-count">0</span>
+          <span class="stat-label">Bingos</span>
+        </div>
+      </div>
+
+      <div class="bingo-card-wrapper">
+        <svg id="bingo-lines" class="bingo-lines-overlay"></svg>
+        <div id="bingo-card" class="bingo-grid"></div>
+      </div>
+
+      <div id="view-other-section" class="hidden">
+        <h2>View Partner's Card</h2>
+        <input type="text" id="other-card-code" placeholder="Enter card code">
+        <button class="btn btn-primary" onclick="loadOtherCard()">View Card</button>
+        <button class="btn btn-secondary" onclick="hideViewOtherCard()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div id="settings-page" class="page">
+    <div class="container">
+      <button class="btn btn-secondary" onclick="hideSettings()">← Back to Card</button>
+
+      <h1>Settings & Personalization</h1>
+
+      <div class="settings-section">
+        <h2>Display Name</h2>
+        <input type="text" id="settings-display-name" placeholder="Your display name">
+      </div>
+
+      <div class="settings-section">
+        <h2>Card Theme</h2>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>Stamp Icon</h2>
+        <div class="stamp-grid" id="stamp-grid"></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>Stamp Color</h2>
+        <div class="color-grid" id="color-grid"></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>Your Card Code</h2>
+        <div class="code-display">
+          <span id="display-card-code"></span>
+          <button class="btn btn-small" onclick="copyCardCode()">Copy</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <button class="btn btn-primary" onclick="generateShareImage()">Generate Shareable Image</button>
+      </div>
+
+      <button class="btn btn-primary btn-large" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <!-- Completion Modal -->
+  <div id="completion-modal" class="modal">
+    <div class="modal-content">
+      <h2 id="modal-title">🎉 Complete Goal</h2>
+      <p id="modal-goal-text" class="modal-goal-text"></p>
+
+      <div class="modal-field">
+        <label for="completion-date">Completion Date:</label>
+        <input type="date" id="completion-date">
+      </div>
+
+      <div class="modal-field">
+        <label for="completion-notes">Notes / Reflection (optional):</label>
+        <textarea id="completion-notes" rows="4" placeholder="How did you accomplish this?"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmCompletion()">Confirm</button>
+        <button class="btn btn-danger hidden" id="modal-uncomplete-btn" onclick="uncompleteGoal()">Uncomplete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="app.js"></script>
+</body>
+</html>
