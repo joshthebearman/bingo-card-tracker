@@ -832,3 +832,335 @@ body[data-theme="sunset-pink"] #card-page {
 body[data-theme="royal"] #card-page {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay.hidden {
+  display: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease-out;
+  border-left: 4px solid #667eea;
+}
+
+.toast.success {
+  border-left-color: #0ba360;
+}
+
+.toast.error {
+  border-left-color: #d63031;
+}
+
+.toast.warning {
+  border-left-color: #feca57;
+}
+
+.toast-icon {
+  font-size: 1.5em;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #2c3e50;
+}
+
+.toast-message {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.toast-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Button Loading State */
+.btn.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Mobile Responsiveness Improvements */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  h2 {
+    font-size: 1.5em;
+  }
+
+  .container {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  /* Landing Page */
+  #landing-page .container {
+    padding: 20px;
+  }
+
+  /* Bingo Grid */
+  .bingo-card-wrapper {
+    padding: 10px;
+  }
+
+  .bingo-grid {
+    padding: 20px;
+    gap: 3px;
+  }
+
+  .bingo-square {
+    padding: 8px;
+    min-height: 60px;
+  }
+
+  .goal-text {
+    font-size: 0.8em;
+    -webkit-line-clamp: 3;
+  }
+
+  .stamp-overlay {
+    font-size: 3.5em;
+  }
+
+  /* Stats */
+  .stats-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat {
+    width: 100%;
+  }
+
+  /* Card Code Display */
+  .card-code-display {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 15px;
+  }
+
+  .card-code-value {
+    font-size: 1em;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 18px;
+    font-size: 0.95em;
+  }
+
+  .btn-large {
+    padding: 12px 24px;
+  }
+
+  /* Modals */
+  .modal-content {
+    margin: 20px;
+    padding: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+
+  /* Side Drawer */
+  .side-drawer {
+    width: 280px;
+  }
+
+  /* Settings Page */
+  .settings-section {
+    padding: 15px;
+  }
+
+  .theme-grid,
+  .stamp-grid,
+  .color-grid {
+    gap: 8px;
+  }
+
+  /* Create Card Page */
+  .goal-input-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .goal-input-row input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .free-space-label {
+    font-size: 0.85em;
+  }
+
+  /* Toast Notifications on Mobile */
+  #toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .toast {
+    padding: 12px 16px;
+  }
+
+  .toast-icon {
+    font-size: 1.3em;
+  }
+
+  .toast-title {
+    font-size: 0.95em;
+  }
+
+  .toast-message {
+    font-size: 0.85em;
+  }
+}
+
+/* Touch Device Improvements */
+@media (hover: none) and (pointer: coarse) {
+  .bingo-square {
+    /* Larger touch targets */
+    min-height: 70px;
+  }
+
+  .btn {
+    /* Larger touch targets for buttons */
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .bingo-square:hover {
+    transform: none;
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.9),
+      inset 0 0 12px rgba(0, 0, 0, 0.03),
+      0 2px 4px rgba(0, 0, 0, 0.18);
+  }
+
+  /* Add active state for touch feedback */
+  .bingo-square:active {
+    transform: scale(0.98);
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.9),
+      inset 0 0 12px rgba(0, 0, 0, 0.03),
+      0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .bingo-grid {
+    padding: 15px;
+  }
+
+  .bingo-square {
+    min-height: 50px;
+  }
+}

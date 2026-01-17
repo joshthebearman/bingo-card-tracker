@@ -7,6 +7,64 @@ let isViewingOtherCard = false;
 
 const API_URL = '/api';
 
+// Utility functions
+function showLoading() {
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+function showToast(message, type = 'info', title = null) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '⚠',
+    info: 'ℹ'
+  };
+
+  const titles = {
+    success: title || 'Success',
+    error: title || 'Error',
+    warning: title || 'Warning',
+    info: title || 'Info'
+  };
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-content">
+      <div class="toast-title">${titles[type]}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.style.animation = 'slideIn 0.3s ease-out reverse';
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
+function setButtonLoading(button, loading) {
+  if (loading) {
+    button.classList.add('loading');
+    button.disabled = true;
+  } else {
+    button.classList.remove('loading');
+    button.disabled = false;
+  }
+}
+
 // Themes
 const themes = [
   { id: 'royal', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
@@ -29,7 +87,61 @@ const stampColors = [
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initializeCreatePage();
+  setupKeyboardShortcuts();
 });
+
+// Keyboard shortcuts
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    // Esc key - close modals and drawer
+    if (e.key === 'Escape') {
+      const modal = document.querySelector('.modal.active');
+      if (modal) {
+        if (modal.id === 'completion-modal') {
+          closeModal();
+        } else if (modal.id === 'delete-modal') {
+          closeDeleteModal();
+        }
+      }
+
+      const drawer = document.getElementById('side-drawer');
+      if (drawer.classList.contains('open')) {
+        closeDrawer();
+      }
+    }
+
+    // Enter key - submit forms
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // Modal confirmation
+      const modal = document.querySelector('.modal.active');
+      if (modal?.id === 'completion-modal') {
+        e.preventDefault();
+        confirmCompletion();
+      }
+    }
+  });
+
+  // Add Enter key submit to input fields
+  const cardCodeInput = document.getElementById('card-code-input');
+  if (cardCodeInput) {
+    cardCodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadCard();
+      }
+    });
+  }
+
+  const otherCardCodeInput = document.getElementById('other-card-code');
+  if (otherCardCodeInput) {
+    otherCardCodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadOtherCard();
+      }
+    });
+  }
+}
 
 // Navigation
 function showLanding() {
@@ -129,9 +241,10 @@ function initializeCreatePage() {
 async function createCard() {
   const ownerName = document.getElementById('owner-name').value.trim();
   const errorEl = document.getElementById('create-error');
+  errorEl.textContent = '';
 
   if (!ownerName) {
-    errorEl.textContent = 'Please enter your name';
+    showToast('Please enter your name', 'warning');
     return;
   }
 
@@ -148,18 +261,19 @@ async function createCard() {
   }
 
   if (hasEmptyGoal) {
-    errorEl.textContent = 'Please fill in all 25 goals';
+    showToast('Please fill in all 25 goals', 'warning');
     return;
   }
 
   const freeSpaceRadio = document.querySelector('input[name="free-space"]:checked');
   if (!freeSpaceRadio) {
-    errorEl.textContent = 'Please select one goal as the free space';
+    showToast('Please select one goal as the free space', 'warning');
     return;
   }
 
   const freeSpaceIndex = parseInt(freeSpaceRadio.value);
 
+  showLoading();
   try {
     const response = await fetch(`${API_URL}/cards`, {
       method: 'POST',
@@ -170,12 +284,15 @@ async function createCard() {
     const data = await response.json();
 
     if (response.ok) {
+      showToast('Card created successfully!', 'success');
       await loadCardByCode(data.code);
     } else {
-      errorEl.textContent = data.error || 'Failed to create card';
+      showToast(data.error || 'Failed to create card', 'error');
     }
   } catch (error) {
-    errorEl.textContent = 'Network error. Please try again.';
+    showToast('Network error. Please check your connection and try again.', 'error');
+  } finally {
+    hideLoading();
   }
 }
 
@@ -183,9 +300,10 @@ async function createCard() {
 async function loadCard() {
   const code = document.getElementById('card-code-input').value.trim();
   const errorEl = document.getElementById('load-error');
+  errorEl.textContent = '';
 
   if (!code) {
-    errorEl.textContent = 'Please enter a card code';
+    showToast('Please enter a card code', 'warning');
     return;
   }
 
@@ -196,7 +314,7 @@ async function loadOtherCard() {
   const code = document.getElementById('other-card-code').value.trim();
 
   if (!code) {
-    alert('Please enter a card code');
+    showToast('Please enter a card code', 'warning');
     return;
   }
 
@@ -206,6 +324,7 @@ async function loadOtherCard() {
 }
 
 async function loadCardByCode(code) {
+  showLoading();
   try {
     const response = await fetch(`${API_URL}/cards/${code}`);
     const data = await response.json();
@@ -219,11 +338,16 @@ async function loadCardByCode(code) {
       showCardPage();
 
       document.getElementById('load-error').textContent = '';
+      if (!isViewingOtherCard) {
+        showToast('Card loaded successfully!', 'success');
+      }
     } else {
-      document.getElementById('load-error').textContent = data.error || 'Card not found';
+      showToast(data.error || 'Card not found', 'error');
     }
   } catch (error) {
-    document.getElementById('load-error').textContent = 'Network error. Please try again.';
+    showToast('Network error. Please check your connection and try again.', 'error');
+  } finally {
+    hideLoading();
   }
 }
 
@@ -339,7 +463,9 @@ async function confirmCompletion() {
   const notesInput = document.getElementById('completion-notes').value;
 
   const wasCompleted = goal.is_completed;
+  const confirmBtn = document.getElementById('modal-confirm-btn');
 
+  setButtonLoading(confirmBtn, true);
   try {
     const response = await fetch(`${API_URL}/goals/${selectedGoalId}`, {
       method: 'PUT',
@@ -358,18 +484,27 @@ async function confirmCompletion() {
 
       closeModal();
       renderCard();
+      showToast(wasCompleted ? 'Goal updated successfully!' : 'Goal completed! Great work!', 'success');
 
       // Check for new bingos
       if (!wasCompleted) {
         await checkForBingos();
       }
+    } else {
+      const data = await response.json();
+      showToast(data.error || 'Failed to update goal', 'error');
     }
   } catch (error) {
-    alert('Failed to update goal');
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    setButtonLoading(confirmBtn, false);
   }
 }
 
 async function uncompleteGoal() {
+  const uncompleteBtn = document.getElementById('modal-uncomplete-btn');
+
+  setButtonLoading(uncompleteBtn, true);
   try {
     const response = await fetch(`${API_URL}/goals/${selectedGoalId}`, {
       method: 'PUT',
@@ -384,14 +519,20 @@ async function uncompleteGoal() {
       goal.notes = null;
 
       closeModal();
+      showToast('Goal marked as incomplete', 'info');
 
       // Check if any bingos should be removed
       await checkForBingos();
 
       renderCard();
+    } else {
+      const data = await response.json();
+      showToast(data.error || 'Failed to update goal', 'error');
     }
   } catch (error) {
-    alert('Failed to update goal');
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    setButtonLoading(uncompleteBtn, false);
   }
 }
 
@@ -750,6 +891,7 @@ async function saveSettings() {
   const selectedStamp = document.querySelector('.stamp-option.selected')?.dataset.stamp;
   const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
 
+  showLoading();
   try {
     const response = await fetch(`${API_URL}/cards/${currentCard.code}`, {
       method: 'PUT',
@@ -770,30 +912,38 @@ async function saveSettings() {
 
       renderCard();
       hideSettings();
+      showToast('Settings saved successfully!', 'success');
     } else {
-      alert('Failed to save settings');
+      const data = await response.json();
+      showToast(data.error || 'Failed to save settings', 'error');
     }
   } catch (error) {
-    alert('Network error');
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    hideLoading();
   }
 }
 
 function copyCardCode() {
   const code = currentCard.code;
   navigator.clipboard.writeText(code).then(() => {
-    alert('Card code copied to clipboard!');
+    showToast('Card code copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Failed to copy to clipboard', 'error');
   });
 }
 
 function copyMainCardCode() {
   const code = currentCard.code;
   navigator.clipboard.writeText(code).then(() => {
-    alert('Card code copied to clipboard!');
+    showToast('Card code copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Failed to copy to clipboard', 'error');
   });
 }
 
 function generateShareImage() {
-  alert('Share image feature will use html2canvas library. Install it to enable this feature.');
+  showToast('Share image feature coming soon! Install html2canvas to enable.', 'info');
   // TODO: Implement with html2canvas
   // This would convert the bingo card to a canvas and then to a JPEG
 }
@@ -801,7 +951,7 @@ function generateShareImage() {
 // Delete Card Functions
 function showDeleteConfirmation() {
   if (isViewingOtherCard) {
-    alert('You cannot delete a card you are viewing. Switch to your own card to delete it.');
+    showToast('You cannot delete a card you are viewing. Switch to your own card first.', 'warning');
     return;
   }
 
@@ -818,10 +968,11 @@ async function confirmDeleteCard() {
   const ownerName = document.getElementById('delete-owner-name').value.trim();
 
   if (!ownerName) {
-    alert('Please enter the owner name to confirm deletion');
+    showToast('Please enter the owner name to confirm deletion', 'warning');
     return;
   }
 
+  showLoading();
   try {
     const response = await fetch(`${API_URL}/cards/${currentCard.code}`, {
       method: 'DELETE',
@@ -831,17 +982,19 @@ async function confirmDeleteCard() {
 
     if (response.ok) {
       closeDeleteModal();
-      alert('Card deleted successfully!');
+      showToast('Card deleted successfully!', 'success');
       currentCard = null;
       currentGoals = [];
       currentBingos = [];
       showLanding();
     } else {
       const data = await response.json();
-      alert(data.error || 'Failed to delete card');
+      showToast(data.error || 'Failed to delete card', 'error');
     }
   } catch (error) {
-    alert('Network error. Please try again.');
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    hideLoading();
   }
 }
 
