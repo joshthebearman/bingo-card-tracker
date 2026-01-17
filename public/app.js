@@ -171,7 +171,6 @@ async function createCard() {
 
     if (response.ok) {
       await loadCardByCode(data.code);
-      showCardPage();
     } else {
       errorEl.textContent = data.error || 'Failed to create card';
     }
@@ -279,6 +278,9 @@ function renderCard() {
   const completedCount = currentGoals.filter(g => g.is_completed).length;
   document.getElementById('goals-complete').textContent = completedCount;
   document.getElementById('bingos-count').textContent = currentBingos.length;
+
+  // Update card code display
+  document.getElementById('main-card-code').textContent = currentCard.code;
 
   // Draw bingo lines
   drawBingoLines();
@@ -775,10 +777,54 @@ function copyCardCode() {
   });
 }
 
+function copyMainCardCode() {
+  const code = currentCard.code;
+  navigator.clipboard.writeText(code).then(() => {
+    alert('Card code copied to clipboard!');
+  });
+}
+
 function generateShareImage() {
   alert('Share image feature will use html2canvas library. Install it to enable this feature.');
   // TODO: Implement with html2canvas
   // This would convert the bingo card to a canvas and then to a JPEG
+}
+
+// Delete Card Functions
+function showDeleteConfirmation() {
+  if (isViewingOtherCard) {
+    alert('You cannot delete a card you are viewing. Switch to your own card to delete it.');
+    return;
+  }
+
+  document.getElementById('delete-card-code').textContent = currentCard.code;
+  document.getElementById('delete-modal').classList.add('active');
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('active');
+}
+
+async function confirmDeleteCard() {
+  try {
+    const response = await fetch(`${API_URL}/cards/${currentCard.code}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      closeDeleteModal();
+      alert('Card deleted successfully!');
+      currentCard = null;
+      currentGoals = [];
+      currentBingos = [];
+      showLanding();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to delete card');
+    }
+  } catch (error) {
+    alert('Network error. Please try again.');
+  }
 }
 
 // Handle window resize for bingo lines

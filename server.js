@@ -125,9 +125,12 @@ app.post('/api/cards', (req, res) => {
         positions.forEach((goal, index) => {
           stmt.run(cardCode, index, goal.text, goal.isFreeSpace ? 1 : 0);
         });
-        stmt.finalize();
-
-        res.json({ code: cardCode });
+        stmt.finalize((err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Failed to insert goals' });
+          }
+          res.json({ code: cardCode });
+        });
       }
     );
   });
@@ -282,6 +285,40 @@ app.delete('/api/bingos/:cardCode/:type/:index', (req, res) => {
       res.json({ success: true });
     }
   );
+});
+
+// Delete card
+app.delete('/api/cards/:code', (req, res) => {
+  const { code } = req.params;
+
+  db.serialize(() => {
+    // Delete bingos first
+    db.run(`DELETE FROM bingos WHERE card_code = ?`, [code], (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to delete bingos' });
+      }
+
+      // Delete goals
+      db.run(`DELETE FROM goals WHERE card_code = ?`, [code], (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Failed to delete goals' });
+        }
+
+        // Delete card
+        db.run(`DELETE FROM cards WHERE code = ?`, [code], function(err) {
+          if (err) {
+            return res.status(500).json({ error: 'Failed to delete card' });
+          }
+
+          if (this.changes === 0) {
+            return res.status(404).json({ error: 'Card not found' });
+          }
+
+          res.json({ success: true });
+        });
+      });
+    });
+  });
 });
 
 app.listen(PORT, () => {
